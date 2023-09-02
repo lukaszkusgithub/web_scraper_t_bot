@@ -5,7 +5,6 @@ import json
 import re
 from urllib.parse import urlparse, parse_qs, urlencode
 # Telegram Bot
-from typing import Final
 import logging
 
 from telegram import Update
@@ -26,8 +25,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-TOKEN: Final = os.getenv('TOKEN')
-BOT_USERNAME: Final = os.getenv('BOT_USERNAME')
+TOKEN = os.getenv('TOKEN')
+BOT_USERNAME = os.getenv('BOT_USERNAME')
+TIMER = 10
+JSON_FILE = "links.json"
 
 
 def save_json_data(data, filename):
@@ -61,7 +62,7 @@ class WebScraper:
 	__end_of_new_offers = 0
 
 	def __init__(self):
-		self.__data = open_file("links.json")
+		self.__data = open_file(JSON_FILE)
 
 	def print_offers(self):
 		if len(self.__olx_offers) > 0:
@@ -75,8 +76,6 @@ class WebScraper:
 			save_json_data(self.__olx_offers, filename=self.__link_id)
 
 	def get_olx_offers(self, offers, init=False):
-		# self.new_last_seen_id = self.data
-
 		for offer in offers:
 			olx_offer = {
 				'link': "",
@@ -167,7 +166,6 @@ class WebScraper:
 
 	def run_scanning(self):
 		self.__new_last_seen_id = self.__data["{}".format(self.__link_id)]["last_seen_id"]
-		# print(self.__new_last_seen_id)
 
 		page = requests.get(self.__olx_link)
 		self.__html_data = BeautifulSoup(page.text, 'html.parser')
@@ -255,8 +253,9 @@ async def check_offers(context: ContextTypes.DEFAULT_TYPE):
 async def callback_scanner(update: Update, context: ContextTypes.DEFAULT_TYPE):
 	chat_id = update.message.chat_id
 	name = update.effective_chat.full_name
+	print("Start Scanner")
 	await context.bot.send_message(chat_id=chat_id, text='Start scanner')
-	context.job_queue.run_repeating(check_offers, 10, data=name, chat_id=chat_id)
+	context.job_queue.run_repeating(check_offers, TIMER, data=name, chat_id=chat_id)
 
 
 def main() -> None:

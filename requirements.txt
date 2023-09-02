@@ -1,4 +1,4 @@
 requests~=2.31.0
 beautifulsoup4~=4.12.2
-python-dotenv~=0.21.1
+python-dotenv~=0.21
 python-telegram-bot[job-queue]~=20.4.0
