@@ -27,8 +27,22 @@ logger = logging.getLogger(__name__)
 
 TOKEN = os.getenv('TOKEN')
 BOT_USERNAME = os.getenv('BOT_USERNAME')
-TIMER = 10
+TIMER = 3
 JSON_FILE = "links.json"
+
+LINK_DATA = {
+	"last_seen_id": "min_id",
+	"page": "page",
+	"sorting": "created_at%3Adesc"
+}
+
+WEB_DATA = {
+	"title": ["h6", 'css-1wxaaza'],
+	"price": ["p", "css-13afqrm"],
+	"link": ["a", "css-z3gu2d"],
+	"new_offer": ["p", "css-1kyngsx"],
+	"root element": ["footerContent"]
+}
 
 
 def save_json_data(data, filename):
@@ -64,6 +78,8 @@ class WebScraper:
 	def __init__(self):
 		self.__data = open_file(JSON_FILE)
 
+	# self.init_selenium()
+
 	def print_offers(self):
 		if len(self.__olx_offers) > 0:
 			for item in self.__olx_offers:
@@ -84,10 +100,10 @@ class WebScraper:
 				'id': "",
 			}
 
-			title = offer.find('h6', 'css-16v5mdi er34gjf0')
-			price = offer.find('p', 'css-10b0gli er34gjf0')
-			link = offer.find('a', 'css-rc5s2u')
-			new_offer = offer.find('p', 'css-1kyngsx er34gjf0')
+			title = offer.find(WEB_DATA["title"][0], WEB_DATA["title"][1])
+			price = offer.find(WEB_DATA["price"][0], WEB_DATA["price"][1])
+			link = offer.find(WEB_DATA["link"][0], WEB_DATA["link"][1])
+			new_offer = offer.find(WEB_DATA["new_offer"][0], WEB_DATA["new_offer"][1])
 			offer_id = offer['id']
 
 			if price is not None:
@@ -120,7 +136,7 @@ class WebScraper:
 		parsed_url = urlparse(self.__olx_link)
 
 		query_params = parse_qs(parsed_url.query)
-		search_order = "created_at:desc"
+		search_order = LINK_DATA["sorting"]
 		query_params["search[order]"] = [search_order]
 
 		updated_query_string = urlencode(query_params, doseq=True)
@@ -131,25 +147,30 @@ class WebScraper:
 
 		parsed_url = urlparse(self.__olx_link)
 		query_params = parse_qs(parsed_url.query)
+		# print(query_params)
 
-		if "last_seen_id" in query_params:
-			last_seen_id = query_params["last_seen_id"][0]
-			self.__olx_link = self.__olx_link.replace("last_seen_id=" + str(last_seen_id),
-			                                          "last_seen_id=" + str(self.__new_last_seen_id))
+		if LINK_DATA["last_seen_id"] in query_params:
+			last_seen_id = query_params[LINK_DATA["last_seen_id"]][0]
+			self.__olx_link = self.__olx_link.replace(LINK_DATA["last_seen_id"] + "=" + str(last_seen_id),
+			                                          LINK_DATA["last_seen_id"] + "=" + str(self.__new_last_seen_id))
 		else:
-			self.__olx_link += "&last_seen_id=" + str(self.__new_last_seen_id)
+			self.__olx_link += "&" + LINK_DATA["last_seen_id"] + "=" + str(self.__new_last_seen_id)
 
 	def update_page(self):
 		parsed_url = urlparse(self.__olx_link)
 		query_params = parse_qs(parsed_url.query)
 
-		if "page" in query_params:
-			last_page = query_params["page"][0]
-			self.__olx_link = self.__olx_link.replace("page=" + str(last_page), "page=" + str(self.__page_number))
+		if LINK_DATA["page"] in query_params:
+			last_page = query_params[LINK_DATA["page"]][0]
+			self.__olx_link = self.__olx_link.replace(LINK_DATA["page"] + "=" + str(last_page), LINK_DATA["page"] +
+			                                          "=" +
+			                                          str(
+				                                          self.__page_number))
 		else:
-			self.__olx_link += "&page=" + str(1)
+			self.__olx_link += "&" + LINK_DATA["page"] + "=" + str(1)
 
 	def init_scanning(self):
+
 		self.__olx_link = self.__data["{}".format(self.__link_id)]["link"]
 		self.change_sorting_type()
 		self.update_last_seen_id()
@@ -166,6 +187,7 @@ class WebScraper:
 
 	def run_scanning(self):
 		self.__new_last_seen_id = self.__data["{}".format(self.__link_id)]["last_seen_id"]
+		print()
 
 		page = requests.get(self.__olx_link)
 		self.__html_data = BeautifulSoup(page.text, 'html.parser')
@@ -219,9 +241,7 @@ class WebScraper:
 
 				# scan for offers
 				self.run_scanning()
-			# self.__update_json_file = True
 
-			# if self.__update_json_file:
 			save_json_data(self.__data, "links")
 
 	def get_offers(self):
