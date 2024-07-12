@@ -33,7 +33,7 @@ JSON_FILE = "links.json"
 LINK_DATA = {
 	"last_seen_id": "min_id",
 	"page": "page",
-	"sorting": "created_at%3Adesc"
+	"sorting": "created_at:desc"
 }
 
 WEB_DATA = {
@@ -89,7 +89,7 @@ class WebScraper:
 				print(item["id"])
 				print("\n")
 
-			save_json_data(self.__olx_offers, filename=self.__link_id)
+		# save_json_data(self.__olx_offers, filename=self.__link_id)
 
 	def get_olx_offers(self, offers, init=False):
 		for offer in offers:
@@ -119,6 +119,7 @@ class WebScraper:
 			if new_offer is not None:
 				if self.__page_number == 1 and self.__new_last_id_updated == 0:
 					self.__new_last_seen_id = offer_id
+					print("asd")
 					self.__new_last_id_updated = 1
 					if init:
 						break
@@ -187,7 +188,6 @@ class WebScraper:
 
 	def run_scanning(self):
 		self.__new_last_seen_id = self.__data["{}".format(self.__link_id)]["last_seen_id"]
-		print()
 
 		page = requests.get(self.__olx_link)
 		self.__html_data = BeautifulSoup(page.text, 'html.parser')
