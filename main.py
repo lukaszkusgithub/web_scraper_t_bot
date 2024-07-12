@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 TOKEN = os.getenv('TOKEN')
 BOT_USERNAME = os.getenv('BOT_USERNAME')
-TIMER = 3
+TIMER = float(os.getenv('TIMER'))
 JSON_FILE = "links.json"
 
 LINK_DATA = {
