@@ -82,13 +82,14 @@ class WebScraper:
 	# self.init_selenium()
 
 	def print_offers(self):
-		if len(self.__olx_offers) > 0:
-			for item in self.__olx_offers:
-				print(item["title"])
-				print(item["price"])
-				print(item["link"])
-				print(item["id"])
-				print("\n")
+		return
+		# if len(self.__olx_offers) > 0:
+			# for item in self.__olx_offers:
+			# 	# print(item["title"])
+			# 	# print(item["price"])
+			# 	# print(item["link"])
+			# 	# print(item["id"])
+			# 	# print("\n")
 
 		# save_json_data(self.__olx_offers, filename=self.__link_id)
 
@@ -120,7 +121,6 @@ class WebScraper:
 			if new_offer is not None:
 				if self.__page_number == 1 and self.__new_last_id_updated == 0:
 					self.__new_last_seen_id = offer_id
-					print("new id", self.__new_last_seen_id)
 					self.__new_last_id_updated = 1
 					if init:
 						break
@@ -142,7 +142,6 @@ class WebScraper:
 		query_params[LINK_DATA["search_order"]] = [search_order]
 
 		updated_query_string = urlencode(query_params, doseq=True)
-		print(f"{updated_query_string}")
 
 		self.__olx_link = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}?{updated_query_string}"
 
@@ -150,13 +149,13 @@ class WebScraper:
 
 		parsed_url = urlparse(self.__olx_link)
 		query_params = parse_qs(parsed_url.query)
-
-		if LINK_DATA["last_seen_id"] in query_params:
-			last_seen_id = query_params[LINK_DATA["last_seen_id"]][0]
-			self.__olx_link = self.__olx_link.replace(LINK_DATA["last_seen_id"] + "=" + str(last_seen_id),
-			                                          LINK_DATA["last_seen_id"] + "=" + str(self.__new_last_seen_id))
-		else:
-			self.__olx_link += "&" + LINK_DATA["last_seen_id"] + "=" + str(self.__new_last_seen_id)
+		if self.__new_last_seen_id != 0:
+			if LINK_DATA["last_seen_id"] in query_params:
+				last_seen_id = query_params[LINK_DATA["last_seen_id"]][0]
+				self.__olx_link = self.__olx_link.replace(LINK_DATA["last_seen_id"] + "=" + str(last_seen_id),
+				                                          LINK_DATA["last_seen_id"] + "=" + str(self.__new_last_seen_id))
+			else:
+				self.__olx_link += "&" + LINK_DATA["last_seen_id"] + "=" + str(self.__new_last_seen_id)
 
 	def update_page(self):
 		parsed_url = urlparse(self.__olx_link)
@@ -189,7 +188,6 @@ class WebScraper:
 
 	def run_scanning(self):
 		self.__new_last_seen_id = self.__data["{}".format(self.__link_id)]["last_seen_id"]
-		print("run scanning", self.__new_last_seen_id )
 		page = requests.get(self.__olx_link)
 		self.__html_data = BeautifulSoup(page.text, 'html.parser')
 
@@ -224,6 +222,7 @@ class WebScraper:
 		self.__data["{}".format(self.__link_id)]["link"] = self.__olx_link
 		self.__data["{}".format(self.__link_id)]["last_seen_id"] = self.__new_last_seen_id
 
+
 	def main_loop(self):
 		self.__olx_offers = []
 		if len(self.__data) > 0:
@@ -234,13 +233,16 @@ class WebScraper:
 				self.__link_id = i
 				self.__olx_link = self.__data["{}".format(i)]["link"]
 				self.__page_number = 1
+				self.__new_last_seen_id = 0
 
 				# init scanning
 				if self.__data["{}".format(i)]["init"] == 1:
+					self.__new_last_id_updated = 0
 					self.init_scanning()
 					self.__data["{}".format(i)]["init"] = 0
 
 				# scan for offers
+				self.__new_last_id_updated = 0
 				self.run_scanning()
 
 			save_json_data(self.__data, "links")
