@@ -33,7 +33,8 @@ JSON_FILE = "links.json"
 LINK_DATA = {
 	"last_seen_id": "min_id",
 	"page": "page",
-	"sorting": "created_at:desc"
+	"sorting": "created_at:desc",
+	"search_order": "search[order]"
 }
 
 WEB_DATA = {
@@ -119,7 +120,7 @@ class WebScraper:
 			if new_offer is not None:
 				if self.__page_number == 1 and self.__new_last_id_updated == 0:
 					self.__new_last_seen_id = offer_id
-					print("asd")
+					print("new id", self.__new_last_seen_id)
 					self.__new_last_id_updated = 1
 					if init:
 						break
@@ -138,9 +139,10 @@ class WebScraper:
 
 		query_params = parse_qs(parsed_url.query)
 		search_order = LINK_DATA["sorting"]
-		query_params["search[order]"] = [search_order]
+		query_params[LINK_DATA["search_order"]] = [search_order]
 
 		updated_query_string = urlencode(query_params, doseq=True)
+		print(f"{updated_query_string}")
 
 		self.__olx_link = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}?{updated_query_string}"
 
@@ -148,7 +150,6 @@ class WebScraper:
 
 		parsed_url = urlparse(self.__olx_link)
 		query_params = parse_qs(parsed_url.query)
-		# print(query_params)
 
 		if LINK_DATA["last_seen_id"] in query_params:
 			last_seen_id = query_params[LINK_DATA["last_seen_id"]][0]
@@ -188,7 +189,7 @@ class WebScraper:
 
 	def run_scanning(self):
 		self.__new_last_seen_id = self.__data["{}".format(self.__link_id)]["last_seen_id"]
-
+		print("run scanning", self.__new_last_seen_id )
 		page = requests.get(self.__olx_link)
 		self.__html_data = BeautifulSoup(page.text, 'html.parser')
 
