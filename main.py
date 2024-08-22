@@ -41,7 +41,7 @@ WEB_DATA = {
 	"title": ["h6", 'css-1wxaaza'],
 	"price": ["p", "css-13afqrm"],
 	"link": ["a", "css-z3gu2d"],
-	"new_offer": ["p", "css-1kyngsx"],
+	"new_offer": ["p", "css-z3zkpq"],
 	"root element": ["footerContent"]
 }
 
